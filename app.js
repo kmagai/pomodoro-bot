@@ -1,9 +1,11 @@
-express = require('express');
-bodyParser = require('body-parser');
-hellobot = require('./hellobot');
+"use strict"
 
-app = express();
-port = process.env.PORT || 3000;
+let express = require('express');
+let bodyParser = require('body-parser');
+let pomodoro = require('./pomodoro');
+
+let app = express();
+let port = process.env.PORT || 3000;
 
 // body parser middleware
 app.use(bodyParser.urlencoded({
@@ -15,7 +17,7 @@ app.get('/', function (req, res) {
   res.status(200).send('Hello world!')
 });
 
-app.post('/hello', hellobot);
+app.post('/pomodoro', pomodoro);
 
 // error handler
 app.use(function (err, req, res, next) {

@@ -1,6 +1,8 @@
+"use strict"
+
 module.exports = function (req, res, next) {
-  var userName = req.body.user_name;
-  var botPayload = {
+  let userName = req.body.user_name;
+  let botPayload = {
     text : 'Hello, ' + userName + '!'
   };
 
