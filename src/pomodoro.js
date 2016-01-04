@@ -12,10 +12,20 @@ module.exports = class Pomodoro {
       return next(err);
     });
 
-    return new Promise((resolve, reject) => {
-      // setTimeout(resolve, pomodoroTime * 60 * 1000);
-      setTimeout(resolve, 2000);
+    let res, rej;
+    var p = new Promise(function (resolve, reject) {
+      res = resolve;
+      rej = reject;
     });
+
+    p._timeout = setTimeout(res, 2000);
+    p.resetTimer = (err) => {
+      rej(err || new Error("reset pomodoro"));
+      console.log("reset pomodoro!");
+      clearTimeout(p._timeout);
+      return p;
+    }
+    return p;
   }
 
   startBreak() {
@@ -23,10 +33,20 @@ module.exports = class Pomodoro {
       return next(err);
     });
 
-    return new Promise((resolve, reject) => {
-      // setTimeout(resolve, breakTime * 60 * 1000);
-      setTimeout(resolve, 2000);
+    let res, rej;
+    var p = new Promise(function (resolve, reject) {
+      res = resolve;
+      rej = reject;
     });
+
+    p._timeout = setTimeout(res, 2000);
+    p.resetTimer = (err) => {
+      rej(err || new Error("reset pomodoro"));
+      console.log("reset pomodoro!");
+      clearTimeout(p._timeout);
+      return p;
+    }
+    return p;
   }
 
   finishSession() {

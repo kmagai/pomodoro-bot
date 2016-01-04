@@ -18,18 +18,23 @@ module.exports = class User {
     //   }
     // });
 
-    // return this.pomodoro.startPomodoro().then(this.pomodoro.startBreak());
     const deferred = Promise.defer();
 
-    this.pomodoro.startPomodoro().then(() => {
-      this.pomodoro.startBreak().then(() => {
+    const pomodoroTimer = this.pomodoro.startPomodoro();
+    const breakTimer = this.pomodoro.startBreak();
+    
+    pomodoroTimer.then(() => {
+      breakTimer.then(() => {
         this.pomodoro.finishSession().then(() => {
           deferred.resolve();
         })
       })
     }).catch(err => {
       deferred.reject(err);
+      return res.status(200).end();
     });
+    
+    // breakTimer.resetTimer();
     
     return deferred.promise;
   }
