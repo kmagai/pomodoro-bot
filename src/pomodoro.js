@@ -2,13 +2,13 @@
 
 module.exports = class Pomodoro {
   constructor(pomodoroTime, breakTime, slackBot) {
-    this.pomodoroTime = pomodoroTime;
-    this.breakTime = breakTime;
-    this.slackBot = slackBot;
+    this._pomodoroTime = pomodoroTime;
+    this._breakTime = breakTime;
+    this._slackBot = slackBot;
   }
 
   startPomodoro() {
-    this.slackBot.post(`start pomodoro for ${this.pomodoroTime} min!`).catch(err => {
+    this._slackBot.post(`start pomodoro for ${this._pomodoroTime} min!`).catch(err => {
       return next(err);
     });
 
@@ -29,7 +29,7 @@ module.exports = class Pomodoro {
   }
 
   startBreak() {
-    this.slackBot.post(`Done! Let's have a break for ${this.breakTime}min!`).catch(err => {
+    this._slackBot.post(`Done! Let's have a break for ${this._breakTime}min!`).catch(err => {
       return next(err);
     });
 
@@ -50,7 +50,7 @@ module.exports = class Pomodoro {
   }
 
   finishSession() {
-    this.slackBot.post(`Your pomodoro session has done!`).catch(err => {
+    this._slackBot.post(`Your pomodoro session has done!`).catch(err => {
       return next(err);
     });
 

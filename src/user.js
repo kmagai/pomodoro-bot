@@ -2,9 +2,9 @@
 
 module.exports = class User {
   constructor(user_id, user_name, pomodoro) {
-    this.user_id = user_id;
-    this.user_name = user_name;
-    this.pomodoro = pomodoro;
+    this._user_id = user_id;
+    this._user_name = user_name;
+    this._pomodoro = pomodoro;
   }
 
   startTimer() {
@@ -20,12 +20,12 @@ module.exports = class User {
 
     const deferred = Promise.defer();
 
-    const pomodoroTimer = this.pomodoro.startPomodoro();
-    const breakTimer = this.pomodoro.startBreak();
+    const pomodoroTimer = this._pomodoro.startPomodoro();
+    const breakTimer = this._pomodoro.startBreak();
     
     pomodoroTimer.then(() => {
       breakTimer.then(() => {
-        this.pomodoro.finishSession().then(() => {
+        this._pomodoro.finishSession().then(() => {
           deferred.resolve();
         })
       })

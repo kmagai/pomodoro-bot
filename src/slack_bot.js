@@ -4,9 +4,9 @@ const request = require('request');
 
 module.exports = class SlackBot {
   constructor(bot_name, channel_id, icon_emoji) {
-    this.bot_name = bot_name;
-    this.channel_id = channel_id;
-    this.icon_emoji = icon_emoji;
+    this._bot_name = bot_name;
+    this._channel_id = channel_id;
+    this._icon_emoji = icon_emoji;
   }
 
   post(text) {
@@ -16,9 +16,9 @@ module.exports = class SlackBot {
 
     const bot = {
       text: text,
-      username: this.bot_name,
-      channel: this.channel_id,
-      icon_emoji: this.icon_emoji,
+      username: this._bot_name,
+      channel: this._channel_id,
+      icon_emoji: this._icon_emoji,
     }
 
     request({
