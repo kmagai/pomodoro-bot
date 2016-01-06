@@ -41,7 +41,7 @@ app.post('/pomodoro', (req, res, next) => {
       breakTime = matches[5];
     }
 
-    const slackBot = new SlackBot('pomodoro', req.body.channel_id, ':tomato:');
+    const slackBot = new SlackBot(req.body.channel_id, 'pomodoro', ':tomato:');
     const pomodoro = new Pomodoro(pomodoroTime, breakTime, slackBot);
     const user = new User(req.body.user_id, req.body.user_name, pomodoro);
 
