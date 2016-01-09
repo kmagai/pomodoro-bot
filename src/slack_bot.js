@@ -2,14 +2,14 @@
 
 const request = require('request');
 
+// TODO: make it singleton
 module.exports = class SlackBot {
-  constructor(channel_id, bot_name, icon_emoji) {
-    this._channel_id = channel_id;
+  constructor(bot_name, icon_emoji) {
     this._bot_name = bot_name;
     this._icon_emoji = icon_emoji;
   }
-
-  post(text) {
+  
+  post(channel_id, text) {
     const path = process.env.INCOMING_WEBHOOK_PATH;
     const uri = 'https://hooks.slack.com/services' + path;
     const deferred = Promise.defer();
@@ -17,7 +17,7 @@ module.exports = class SlackBot {
     const bot = {
       text: text,
       username: this._bot_name,
-      channel: this._channel_id,
+      channel: channel_id,
       icon_emoji: this._icon_emoji,
     }
 

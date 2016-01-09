@@ -34,17 +34,17 @@ app.post('/pomodoro', (req, res, next) => {
     //   // const user = new User(req.body.user_id, req.body.user_name, currentPomodoro);
     // }
 
-    let pomodoroTime = 25;
-    let breakTime = 25;
+    let pomodoro_time = 25;
+    let break_time = 25;
     if(matches[3] && matches[5]) {
-      pomodoroTime = matches[3];
-      breakTime = matches[5];
+      pomodoro_time = matches[3];
+      break_time = matches[5];
     }
 
-    const slackBot = new SlackBot(req.body.channel_id, 'pomodoro', ':tomato:');
-    const pomodoro = new Pomodoro(pomodoroTime, breakTime, slackBot);
-    const user = new User(req.body.user_id, req.body.user_name, pomodoro);
-
+    const slackBot = new SlackBot('pomodoro', ':tomato:');
+    const pomodoro = new Pomodoro(pomodoro_time, break_time);
+    const user = new User(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
+    
     user.startTimer().then(() => {
       res.status(200).end();
     }).catch((err) => {
