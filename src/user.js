@@ -1,8 +1,7 @@
 "use strict"
 
-let sessionUsers = [];
-
-module.exports = class User {
+let user_pomodoros = {};
+class User {
   constructor(user_id, user_name, channel_id, pomodoro, slack_bot) {
     this._user_id = user_id;
     this._user_name = user_name;
@@ -22,7 +21,7 @@ module.exports = class User {
     //   }
     // });
 
-    if(sessionUsers.indexOf(this._user_id) != -1) {
+    if(user_pomodoros[this._user_id]) {
       // notify via bot
       console.log('ERROR: you have a session');
       this._slack_bot.post('you have a pomodoro session already').then(() => {
@@ -33,7 +32,11 @@ module.exports = class User {
         return res.status(200).end();
       });
     }
-    sessionUsers.push(this._user_id);
+
+    // const user_pomodoro = {this._user_id: this._pomodoro};
+    Object.assign(user_pomodoros, {
+      [this._user_id]: this._pomodoro
+    });
 
     const deferred = Promise.defer();
 
@@ -71,5 +74,24 @@ module.exports = class User {
   resetTimer() {
     // on reset
     // breakTimer.resetTimer();
+  }
+}
+
+// Using FlyWeight pattern
+module.exports = class UserFactory {
+  constructor() {
+    this.pool = {};
+  }
+
+  static get(user_id, user_name, channel_id, pomodoro, slack_bot) {
+    this.pool = Object.assign({}, this.pool);
+    if(this.pool[user_id]) {
+      return this.pool.user_id;
+    }
+    const user = new User(user_id, user_name, channel_id, pomodoro, slack_bot);
+    Object.assign(this.pool, {
+      [user_id]: user
+    });
+    return user;
   }
 }

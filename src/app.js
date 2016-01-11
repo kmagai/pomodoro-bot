@@ -8,7 +8,7 @@ let port = process.env.PORT || 3000;
 
 const redis = require('redis');
 const url = require('url');
-const User = require('./user');
+const UserFactory = require('./user');
 // TODO: slackBot is a singleton object here. Importing like a class looks weird.
 const slackBot = require('./slack_bot');
 const Pomodoro = require('./pomodoro');
@@ -43,7 +43,7 @@ app.post('/pomodoro', (req, res, next) => {
     }
 
     const pomodoro = new Pomodoro(pomodoro_time, break_time);
-    const user = new User(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
+    const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
     
     user.startTimer().then(() => {
       res.status(200).end();
