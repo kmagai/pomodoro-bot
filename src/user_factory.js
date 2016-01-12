@@ -40,21 +40,19 @@ class User {
 
     const deferred = Promise.defer();
 
-    const pomodoro_timer = this._pomodoro.startPomodoro();
-    const break_timer = this._pomodoro.startBreak();
-    const post_break = this._slack_bot.post(this._channel_id, `start break for ${this._pomodoro.break_time} min!`);
-    const post_start = this._slack_bot.post(this._channel_id, `start pomodoro for ${this._pomodoro.pomodoro_time} min!`);
-    const post_finish = this._slack_bot.post(this._channel_id, `your pomodoro session has finished!`);
+    const break_text = `start break for ${this._pomodoro.break_time} min!`;
+    const start_text = `start pomodoro for ${this._pomodoro.pomodoro_time} min!`;
+    const finish_text = `your pomodoro session has finished!`;
 
-    post_start.then(() => {
+    this._slack_bot.post(this._channel_id, start_text).then(() => {
       console.log("started");
-      pomodoro_timer.then(() => {
+      this._pomodoro.startPomodoro().then(() => {
         console.log("pomodoro done");
-        post_break.then(() => {
+        this._slack_bot.post(this._channel_id, break_text).then(() => {
           console.log("started");
-          break_timer.then(() => {
+          this._pomodoro.startBreak().then(() => {
             console.log("break done");
-            post_finish.then(() => {
+            this._slack_bot.post(this._channel_id, finish_text).then(() => {
               console.log("done");
               deferred.resolve();
             })

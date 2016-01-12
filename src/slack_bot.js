@@ -2,7 +2,6 @@
 
 const request = require('request');
 
-// module.exports = class SlackBot {
 class SlackBot {
   constructor(bot_name, icon_emoji) {
     this._bot_name = bot_name;
