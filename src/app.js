@@ -8,7 +8,7 @@ let port = process.env.PORT || 3000;
 
 const redis = require('redis');
 const url = require('url');
-const UserFactory = require('./user');
+const UserFactory = require('./user_factory');
 // TODO: slackBot is a singleton object here. Importing like a class looks weird.
 const slackBot = require('./slack_bot');
 const Pomodoro = require('./pomodoro');
