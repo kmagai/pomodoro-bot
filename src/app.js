@@ -28,28 +28,32 @@ app.post('/pomodoro', (req, res, next) => {
     return res.status(200).send('/pomodoro start <duration>');
   }
 
-  const matches = req.body.text.match(/^(\S+)(\s+)(\d+)(\s+)(\d+)$/);
-  if(matches && matches[1] == 'start') {
-    // if(user.currentPomodoro) {
-    //   return;
-    //   // const user = new User(req.body.user_id, req.body.user_name, currentPomodoro);
-    // }
 
+  const matches = req.body.text.match(/^(\S+)|(\S+)(\s+)(\d+)(\s+)(\d+)$/);
+  console.log(matches);
+  if(matches && matches[1] == 'start') {
     let pomodoro_time = 25;
     let break_time = 25;
     if(matches[3] && matches[5]) {
       pomodoro_time = matches[3];
       break_time = matches[5];
     }
-
     const pomodoro = new Pomodoro(pomodoro_time, break_time);
     const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
-    
+    console.log(user);
+
     user.startTimer().then(() => {
       res.status(200).end();
     }).catch((err) => {
       next(err);
     });
+  } else if(matches && matches[1] == 'reset') {
+    let pomodoro_time = 25;
+    let break_time = 25;
+    const pomodoro = new Pomodoro(pomodoro_time, break_time);
+    const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
+    user.resetTimer();
+    res.status(200).end();
   }
 });
 

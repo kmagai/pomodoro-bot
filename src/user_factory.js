@@ -23,7 +23,7 @@ class User {
 
     if(user_pomodoros[this._user_id]) {
       // notify via bot
-      console.log('ERROR: you have a session');
+      console.log('ERROR: You already have a pomodoro session');
       this._slack_bot.post('you have a pomodoro session already').then(() => {
         deferred.resolve();
         return deferred.promise;
@@ -45,13 +45,22 @@ class User {
     const finish_text = `your pomodoro session has finished!`;
 
     this._slack_bot.post(this._channel_id, start_text).then(() => {
-      console.log("started");
-      this._pomodoro.startPomodoro().then(() => {
+      console.log("pomodoro started");
+      const start_pomodoro = this._pomodoro.startPomodoro();
+      Object.assign(user_pomodoros, {
+        [this._user_id]: start_pomodoro
+      });
+      start_pomodoro.then(() => {
         console.log("pomodoro done");
         this._slack_bot.post(this._channel_id, break_text).then(() => {
-          console.log("started");
-          this._pomodoro.startBreak().then(() => {
+          console.log("break started");
+          const start_break = this._pomodoro.startBreak();
+          Object.assign(user_pomodoros, {
+            [this._user_id]: start_break
+          });
+          start_break.then(() => {
             console.log("break done");
+            delete user_pomodoros[this._user_id];
             this._slack_bot.post(this._channel_id, finish_text).then(() => {
               console.log("done");
               deferred.resolve();
@@ -70,9 +79,16 @@ class User {
   }
 
   resetTimer() {
-    // on reset
-    // breakTimer.resetTimer();
+    if(!user_pomodoros[this._user_id]) {
+      console.log('ERROR: You have no pomodoro session');
+      return;
+    }
+    console.log("reset pomodoro");
+    user_pomodoros[this._user_id].resetTimer();
+    delete user_pomodoros[this._user_id];
+    console.log("done");
   }
+
 }
 
 // Using FlyWeight pattern
@@ -84,7 +100,7 @@ module.exports = class UserFactory {
   static get(user_id, user_name, channel_id, pomodoro, slack_bot) {
     this.pool = Object.assign({}, this.pool);
     if(this.pool[user_id]) {
-      return this.pool.user_id;
+      return this.pool[user_id];
     }
     const user = new User(user_id, user_name, channel_id, pomodoro, slack_bot);
     Object.assign(this.pool, {
