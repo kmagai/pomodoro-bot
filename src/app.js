@@ -9,7 +9,6 @@ let port = process.env.PORT || 3000;
 const redis = require('redis');
 const url = require('url');
 const UserFactory = require('./user_factory');
-// TODO: slackBot is a singleton object here. Importing like a class looks weird.
 const slackBot = require('./slack_bot');
 const Pomodoro = require('./pomodoro');
 
@@ -28,32 +27,34 @@ app.post('/pomodoro', (req, res, next) => {
     return res.status(200).send('/pomodoro start <duration>');
   }
 
+  let config = {
+    pomodoro_time: 25,
+    break_time: 25,
+    is_silent: true
+  };
 
+  const pomodoro = new Pomodoro(config.pomodoro_time, config.break_time);
+  const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
+  
   const matches = req.body.text.match(/^(\S+)|(\S+)(\s+)(\d+)(\s+)(\d+)$/);
-  console.log(matches);
-  if(matches && matches[1] == 'start') {
-    let pomodoro_time = 25;
-    let break_time = 25;
-    if(matches[3] && matches[5]) {
-      pomodoro_time = matches[3];
-      break_time = matches[5];
-    }
-    const pomodoro = new Pomodoro(pomodoro_time, break_time);
-    const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
-    console.log(user);
-
+  if(!matches) return;
+  if(matches[1] == 'start') {
     user.startTimer().then(() => {
       res.status(200).end();
     }).catch((err) => {
       next(err);
     });
-  } else if(matches && matches[1] == 'reset') {
-    let pomodoro_time = 25;
-    let break_time = 25;
-    const pomodoro = new Pomodoro(pomodoro_time, break_time);
-    const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
+  } else if(matches[1] == 'reset') {
     user.resetTimer();
     res.status(200).end();
+  } else if(matches[1] == 'config') {
+    return res.status(200).send(
+      `[Your pomodoro setting]
+
+Pomodoro time: ${config.pomodoro_time} min
+Break time: ${config.break_time} min
+Silent mode: ${config.is_silent}`
+    );
   }
 });
 
