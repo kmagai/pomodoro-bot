@@ -33,11 +33,21 @@ app.post('/pomodoro', (req, res, next) => {
     is_silent: true
   };
 
+  const bool_map = {
+    y: true,
+    yes: true,
+    1: true,
+    n: false,
+    no: false,
+    0: false
+  }
+
   const pomodoro = new Pomodoro(config.pomodoro_time, config.break_time);
   const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
-  
-  const matches = req.body.text.match(/^(\S+)|(\S+)(\s+)(\d+)(\s+)(\d+)$/);
-  if(!matches) return;
+
+  const matches = req.body.text.match(/^(\S+)(\s+)(\S+)=(\S+)|(\S+)$/);
+  if(!matches) return res.status(200).send('send help message here!');
+  console.log(matches);
   if(matches[1] == 'start') {
     user.startTimer().then(() => {
       res.status(200).end();
@@ -48,13 +58,30 @@ app.post('/pomodoro', (req, res, next) => {
     user.resetTimer();
     res.status(200).end();
   } else if(matches[1] == 'config') {
+    console.log(matches[3]);
+    // TODO: check if it works even on false Bool
+    if(config[matches[3]]) {
+      // TODO: varidate num or bool
+      if(matches[4]) {
+        if(matches[3] == 'is_silent') {
+          config[matches[3]] = bool_map[matches[4]];
+        } else {
+          config[matches[3]] = matches[4];
+        }
+      } else {
+        return res.status(200).send('send help message here!');
+      }
+    } else {
+      return res.status(200).send('You specified non-existent config.');
+    }
     return res.status(200).send(
       `[Your pomodoro setting]
-
-Pomodoro time: ${config.pomodoro_time} min
-Break time: ${config.break_time} min
-Silent mode: ${config.is_silent}`
+Pomodoro time: ${config.pomodoro_time} min ['/pomodoro config pomodoro_time=N']
+Break time   : ${config.break_time} min ['/pomodoro config break_time=N']
+Silent mode  : ${config.is_silent}   ['/pomodoro config is_silent=yes', '/pomodoro config is_silent=no']`
     );
+  } else {
+    res.status(200).send('send help message here!');
   }
 });
 
