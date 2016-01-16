@@ -28,10 +28,10 @@ module.exports = class User {
     this.pomodoro = pomodoro;
     this.slack_bot = slack_bot;
   }
-  
+
   static getOrCreate(user_id, user_name, channel_id) {
     let user = this._getExisting(user_id);
-    if (!user) {
+    if(!user) {
       user = this._create(user_id, user_name, channel_id);
     }
     return user;
@@ -96,11 +96,31 @@ module.exports = class User {
     return config.user_config_default;
   }
 
+  _slack_post(message) {
+    return this.slack_bot.post(message);
+  }
+  
+  _start_pomodoro() {
+    return this.pomodoro.startPomodoro();
+  }
+  
+  _start_break() {
+    return this.pomodoro.startBreak();
+  }
+  
+  _break_duration() {
+    return this.pomdoro.break_time;
+  }
+  
+  _pomodoro_duration() {
+    return this.pomdoro.pomodoro_time;
+  }
+  
   startTimer() {
     if(user_pomodoros[this._user_id]) {
       // notify via bot
       console.log('ERROR: You already have a pomodoro session');
-      this.slack_bot.post('you have a pomodoro session already').then(() => {
+      this._slack_post('you have a pomodoro session already').then(() => {
         deferred.resolve();
         return deferred.promise;
       }).catch(() => {
@@ -115,28 +135,28 @@ module.exports = class User {
     });
 
     const deferred = Promise.defer();
-    const break_text = `start break for ${this.pomodoro.break_time} min!`;
-    const start_text = `start pomodoro for ${this.pomodoro.pomodoro_time} min!`;
+    const break_text = `start break for ${this._break_duration} min!`;
+    const start_text = `start pomodoro for ${this._pomodoro_duration} min!`;
     const finish_text = `your pomodoro session has finished!`;
 
-    this.slack_bot.post(this._channel_id, start_text).then(() => {
+    this._slack_post(this._channel_id, start_text).then(() => {
       console.log("pomodoro started");
-      const start_pomodoro = this.pomodoro.startPomodoro();
+      const start_pomodoro = this._start_pomodoro();
       Object.assign(user_pomodoros, {
         [this._user_id]: start_pomodoro
       });
       start_pomodoro.then(() => {
         console.log("pomodoro done");
-        this.slack_bot.post(this._channel_id, break_text).then(() => {
+        this._slack_post(this._channel_id, break_text).then(() => {
           console.log("break started");
-          const start_break = this.pomodoro.startBreak();
+          const start_break = this._start_break();
           Object.assign(user_pomodoros, {
             [this._user_id]: start_break
           });
           start_break.then(() => {
             console.log("break done");
             delete user_pomodoros[this._user_id];
-            this.slack_bot.post(this._channel_id, finish_text).then(() => {
+            this._slack_post(this._channel_id, finish_text).then(() => {
               console.log("done");
               deferred.resolve();
             })
