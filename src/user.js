@@ -1,36 +1,10 @@
 "use strict"
-let validator = require('validator');
+
+const redis = require('redis');
 
 const Pomodoro = require('./pomodoro');
 const slackBot = require('./slack_bot');
-const bool_map = new Map([
-  ['y', true],
-  ['yes', true],
-  [1, true],
-  ['n', false],
-  ['no', false],
-  [0, false]
-]);
-
-// TODO: need to define type map as well?
-let pomodoro_setting = {
-  pomodoro_time: 25,
-  break_time: 25,
-  is_silent: true
-};
-
-const user_config_type = new Map([
-  ['pomodoro_time', Number],
-  ['break_time', Number],
-  ['is_silent', Boolean]
-]);
-
-const type_validator = new Map([
-  [Number, validator.isNumeric],
-  [Boolean, validator.isBoolean]
-]);
-
-const redis = require('redis');
+const config = require('./config.js')
 const client = getRedisClient();
 
 function getRedisClient() {
@@ -54,8 +28,16 @@ module.exports = class User {
     this.pomodoro = pomodoro;
     this.slack_bot = slack_bot;
   }
+  
+  static getOrCreate(user_id, user_name, channel_id) {
+    let user = this._getExisting(user_id);
+    if (!user) {
+      user = this._create(user_id, user_name, channel_id);
+    }
+    return user;
+  }
 
-  static create(user_id, user_name, channel_id) {
+  static _create(user_id, user_name, channel_id) {
     const user = new User(user_id, user_name, channel_id);
     const user_config = user._get_or_default_config();
     user.pomodoro = new Pomodoro(user_config.pomodoro_time, user_config.break_time, user_config.is_silent);
@@ -63,7 +45,7 @@ module.exports = class User {
     return user;
   }
 
-  static getExisting(user_id) {
+  static _getExisting(user_id) {
     this.pool = Object.assign({}, this.pool);
     if(this.pool[user_id]) {
       return this.pool[user_id];
@@ -81,6 +63,7 @@ module.exports = class User {
     const user_config = Object.assign(this._get_or_default_config(), {
       [key]: value
     });
+    this.pomodoro[key] = value;
     client.set(this._get_redis_key('config'), JSON.stringify(user_config));
   }
 
@@ -90,38 +73,27 @@ module.exports = class User {
 
   _validate_config(key, value) {
     if(key == undefined || value == undefined) throw new Error("You don't have enough argument");
-    if(!user_config_type.has(key)) throw new Error('You specified non-existent config');
-    let hoge = type_validator.get(user_config_type.get(key))(value);
-    console.log(hoge);
-    return hoge;
+    if(!config.user_config_type.has(key)) throw new Error('You specified non-existent config');
+    return config.type_validator.get(config.user_config_type.get(key))(value);
   }
 
   _convert_value_if_needed(key, value) {
-    if(user_config_type.get(key) == Boolean) {
-      console.log('key');
-      console.log(key);
-      console.log('value');
-      console.log(value);
-      if(bool_map.has(value)) {
-        console.log("res");
-        console.log(bool_map.get(value));
-        return bool_map.get(value);
+    if(config.user_config_type.get(key) == Boolean) {
+      if(config.bool_map.has(value)) {
+        return config.bool_map.get(value);
       } else {
-        throw new Error("You have wrong value");
+        throw new Error("You have a wrong value");
       }
     }
     return value;
   }
 
   _get_or_default_config() {
-    // client.get(`config:${user_id}`, function (err, data) {
     client.get(this._get_redis_key('config'), function (err, data) {
-      console.log('aaaaaaaaaaaaaaaa');
-      console.log(data);
       if(err) return console.log(err);
       if(data) return JSON.parse(data);
     });
-    return pomodoro_setting;
+    return config.user_config_default;
   }
 
   startTimer() {
@@ -143,7 +115,6 @@ module.exports = class User {
     });
 
     const deferred = Promise.defer();
-
     const break_text = `start break for ${this.pomodoro.break_time} min!`;
     const start_text = `start pomodoro for ${this.pomodoro.pomodoro_time} min!`;
     const finish_text = `your pomodoro session has finished!`;

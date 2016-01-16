@@ -8,6 +8,16 @@ module.exports = class Pomodoro {
     this.is_silent = is_silent;
   }
 
+  getPomodoro() {
+    client.get(user.get_redis_key('config'), function (err, data) {
+      if(err) return console.log(err);
+      if(data) {
+        this.user_config = JSON.parse(data);
+      }
+    });
+    return new Pomodoro(user_config.pomodoro_time, user_config.pomodoro);
+  }
+
   startPomodoro() {
     let res, rej;
     var p = new Promise(function (resolve, reject) {
