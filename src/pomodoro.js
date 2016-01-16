@@ -1,10 +1,11 @@
 "use strict"
 
 module.exports = class Pomodoro {
-  constructor(pomodoro_time, break_time) {
+  constructor(pomodoro_time, break_time, is_silent) {
     // TODO: use them via accessor
     this.pomodoro_time = pomodoro_time;
     this.break_time = break_time;
+    this.is_silent = is_silent;
   }
 
   startPomodoro() {

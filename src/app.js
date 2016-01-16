@@ -6,11 +6,8 @@ let bodyParser = require('body-parser');
 let app = express();
 let port = process.env.PORT || 3000;
 
-const redis = require('redis');
 const url = require('url');
-const UserFactory = require('./user_factory');
-const slackBot = require('./slack_bot');
-const Pomodoro = require('./pomodoro');
+const User = require('./user');
 
 // body parser middleware
 app.use(bodyParser.urlencoded({
@@ -27,27 +24,11 @@ app.post('/pomodoro', (req, res, next) => {
     return res.status(200).send('/pomodoro start <duration>');
   }
 
-  let config = {
-    pomodoro_time: 25,
-    break_time: 25,
-    is_silent: true
-  };
-
-  const bool_map = {
-    y: true,
-    yes: true,
-    1: true,
-    n: false,
-    no: false,
-    0: false
-  }
-
-  const pomodoro = new Pomodoro(config.pomodoro_time, config.break_time);
-  const user = UserFactory.get(req.body.user_id, req.body.user_name, req.body.channel_id, pomodoro, slackBot);
+  let user = User.getExisting(req.body.user_id);
+  if(!user) user = User.create(req.body.user_id, req.body.user_name, req.body.channel_id);
 
   const matches = req.body.text.match(/^(\S+)(\s+)(\S+)=(\S+)|(\S+)$/);
   if(!matches) return res.status(200).send('send help message here!');
-  console.log(matches);
   if(matches[1] == 'start') {
     user.startTimer().then(() => {
       res.status(200).end();
@@ -58,28 +39,19 @@ app.post('/pomodoro', (req, res, next) => {
     user.resetTimer();
     res.status(200).end();
   } else if(matches[1] == 'config') {
-    console.log(matches[3]);
-    // TODO: check if it works even on false Bool
-    if(config[matches[3]]) {
-      // TODO: varidate num or bool
-      if(matches[4]) {
-        if(matches[3] == 'is_silent') {
-          config[matches[3]] = bool_map[matches[4]];
-        } else {
-          config[matches[3]] = matches[4];
-        }
-      } else {
-        return res.status(200).send('send help message here!');
-      }
-    } else {
-      return res.status(200).send('You specified non-existent config.');
-    }
-    return res.status(200).send(
-      `[Your pomodoro setting]
-Pomodoro time: ${config.pomodoro_time} min ['/pomodoro config pomodoro_time=N']
-Break time   : ${config.break_time} min ['/pomodoro config break_time=N']
-Silent mode  : ${config.is_silent}   ['/pomodoro config is_silent=yes', '/pomodoro config is_silent=no']`
-    );
+    // TODO: can acess non-existent key?
+    // if (matches[3] && matches[4]) {
+    // TODO: introduce Promise and handle error
+    user.set_config_if_valid(matches[3], matches[4]);
+    // }
+    return res.status(200).send(trim
+  `
+    [Your pomodoro setting]
+    Pomodoro time: ${user.pomodoro.pomodoro_time} min ['/pomodoro config pomodoro_time=N']
+    Break time   : ${user.pomodoro.break_time} min ['/pomodoro config break_time=N']
+    Silent mode  : ${user.pomodoro.is_silent}   ['/pomodoro config is_silent=yes', '/pomodoro config is_silent=no']
+  `
+);
   } else {
     res.status(200).send('send help message here!');
   }
@@ -95,13 +67,8 @@ app.listen(port, () => {
   console.log('Slack bot listening on port ' + port);
 });
 
-function getRedisClient() {
-  if(process.env.REDISTOGO_URL) {
-    var rtg = url.parse(process.env.REDISTOGO_URL);
-    var client = redis.createClient(rtg.port, rtg.hostname);
-    client.auth(rtg.auth.split(":")[1]);
-    return client;
-  } else {
-    return redis.createClient();
-  }
+function trim() {
+  var raw = String.raw.apply(null, arguments)
+  return raw.split('\n').map(s => s.trim()).join('\n').replace(/(^\n)|(\n$)/g, '')
 }
+
