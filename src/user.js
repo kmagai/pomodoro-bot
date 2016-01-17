@@ -21,28 +21,39 @@ function getRedisClient() {
 
 let user_pomodoros = {};
 module.exports = class User {
-  constructor(user_id, user_name, channel_id, pomodoro, slack_bot) {
-    this._user_id = user_id;
-    this._user_name = user_name;
-    this._channel_id = channel_id;
-    this.pomodoro = pomodoro;
-    this.slack_bot = slack_bot;
+  // constructor(user_id, user_name, channel_id, pomodoro, slack_bot) {
+  constructor(options) {
+    options = Object.assign(this._defaults(), options);
+    this._user_id = options.user_id;
+    this._user_name = options.user_name;
+    this._channel_id = options.channel_id;
+    this.pomodoro = options.pomodoro;
+    this.slack_bot = options.slack_bot;
   }
 
-  static getOrCreate(user_id, user_name, channel_id) {
-    let user = this._getExisting(user_id);
+  _defaults() {
+    const user_config = this._get_or_default_config();
+    return {
+      pomodoro: new Pomodoro(user_config.pomodoro_time, user_config.break_time, user_config.is_silent),
+      slack_bot: slackBot
+    };
+  }
+
+  // static getOrCreate(user_id, user_name, channel_id) {
+  static getOrCreate(options) {
+    let user = this._getExisting(options.user_id);
     if(!user) {
-      user = this._create(user_id, user_name, channel_id);
+      user = this._create(options.user_id, options.user_name, options.channel_id);
     }
     return user;
   }
 
   static _create(user_id, user_name, channel_id) {
-    const user = new User(user_id, user_name, channel_id);
-    const user_config = user._get_or_default_config();
-    user.pomodoro = new Pomodoro(user_config.pomodoro_time, user_config.break_time, user_config.is_silent);
-    user.slack_bot = slackBot;
-    return user;
+    return new User({
+      user_id: user_id,
+      user_name: user_name,
+      channel_id: channel_id
+    });
   }
 
   static _getExisting(user_id) {
@@ -99,23 +110,23 @@ module.exports = class User {
   _slack_post(message) {
     return this.slack_bot.post(message);
   }
-  
+
   _start_pomodoro() {
     return this.pomodoro.startPomodoro();
   }
-  
+
   _start_break() {
     return this.pomodoro.startBreak();
   }
-  
+
   _break_duration() {
     return this.pomdoro.break_time;
   }
-  
+
   _pomodoro_duration() {
     return this.pomdoro.pomodoro_time;
   }
-  
+
   startTimer() {
     if(user_pomodoros[this._user_id]) {
       // notify via bot

@@ -39,7 +39,12 @@ app.get('/', (req, res) => {
 app.post('/pomodoro', (req, res, next) => {
   if(!req.body.text) return res.status(200).send(help_message);
 
-  let user = User.getOrCreate(req.body.user_id);
+  let user = User.getOrCreate({
+    user_id: req.body.user_id,
+    user_name: req.body.user_name,
+    channel_id: req.body.channel_id
+  });
+  
   const matches_config = req.body.text.match(/^(\S+)(\s+)(\S+)=(\S+)$/);
   if(matches_config) {
     if(matches_config[1] == 'config') {
