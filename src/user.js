@@ -64,6 +64,9 @@ module.exports = class User {
   }
 
   set_config_if_valid(key, value) {
+    console.log("===================");
+    this._add_completed_task();
+    console.log("===================");
     value = this._convert_value_if_needed(key, value);
     if(this._validate_config(key, value)) {
       this._set_config(key, value);
@@ -77,11 +80,32 @@ module.exports = class User {
     this.pomodoro[key] = value;
     client.set(this._get_redis_key('config'), JSON.stringify(user_config));
   }
+  
+  _add_completed_task() {
+    const completed_today = {[this._today()]: this._get_completed_task(this._today()) + 1};
+    client.set(this._get_redis_key('completed'), JSON.stringify(completed_today));
+    // let today_a = this._get_completed_task(this._today());
+    // console.log(today_a);
+  }
+  
+  _get_completed_task(from) {
+    console.log(this._today());
+    console.log(from);
+    client.zrange(this._get_redis_key('completed'), 20160110, Number(this._today()), function (err, data) {
+      if(err) console.log(err);;
+      if(data) return JSON.parse(data);
+    });
+    return 0;
+  }
+
+  _today() {
+    return (new Date()).toISOString().slice(0,10).replace(/-/g,"")
+  }
 
   _get_redis_key(target) {
     return `${target}:${this.user_id}`;
   }
-
+  
   _validate_config(key, value) {
     if(key == undefined || value == undefined) throw new Error("You don't have enough argument");
     if(!config.user_config_type.has(key)) throw new Error('You specified non-existent config');
@@ -98,7 +122,7 @@ module.exports = class User {
     }
     return value;
   }
-
+  
   _get_or_default_config() {
     client.get(this._get_redis_key('config'), function (err, data) {
       if(err) return console.log(err);
@@ -169,6 +193,7 @@ module.exports = class User {
             delete user_pomodoros[this._user_id];
             this._slack_post(this._channel_id, finish_text).then(() => {
               console.log("done");
+              this._add_completed_task();
               deferred.resolve();
             })
           })
