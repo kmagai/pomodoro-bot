@@ -3,6 +3,23 @@ const validator = require('validator');
 
 let config = {};
 
+config.slackbot_default_config = {
+  bot_name: 'pomodoro',
+  icon_emoji: ':tomato:',
+  is_silent: true,
+}
+
+config.pomodoro_default_config = {
+  pomodoro_time: 25,
+  break_time: 25,
+};
+
+config.user_config_default = {
+  pomodoro_time: 25,
+  break_time: 25,
+  is_silent: true
+};
+
 config.user_config_default = {
   pomodoro_time: 25,
   break_time: 25,

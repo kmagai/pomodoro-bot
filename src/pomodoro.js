@@ -1,11 +1,19 @@
 "use strict"
+const config = require('./config.js')
 
 module.exports = class Pomodoro {
-  constructor(pomodoro_time, break_time, is_silent) {
-    // TODO: use them via accessor
+  constructor(pomodoro_time, break_time) {
     this.pomodoro_time = pomodoro_time;
     this.break_time = break_time;
-    this.is_silent = is_silent;
+  }
+  
+  static create(config) {
+    Object.assign(this._get_default_config(), config);
+    return new Pomodoro(config.pomodoro_time, config.break_time);
+  }
+  
+  static _get_default_config() {
+    return config.pomodoro_default_config;
   }
 
   getPomodoro() {

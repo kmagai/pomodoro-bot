@@ -1,11 +1,23 @@
 "use strict"
 
 const request = require('request');
+const config = require('./config.js')
 
-class SlackBot {
-  constructor(bot_name, icon_emoji) {
+module.exports = class SlackBot {
+  // module.exports = new SlackBot('pomodoro', ':tomato:');
+  constructor(bot_name, icon_emoji, is_silent) {
     this._bot_name = bot_name;
     this._icon_emoji = icon_emoji;
+    this._is_silent = is_silent;
+  }
+
+  static create(config) {
+    Object.assign(this._get_default_config(), config);
+    return new SlackBot(config.bot_name, config.icon_emoji, config.is_silent);
+  }
+
+  static _get_default_config() {
+    return config.slackbot_default_config;
   }
 
   post(channel_id, text) {
@@ -36,5 +48,4 @@ class SlackBot {
     return deferred.promise;
   }
 }
-
-module.exports = new SlackBot('pomodoro', ':tomato:');
+  
