@@ -12,7 +12,8 @@ module.exports = class SlackBot {
   }
 
   static create(config) {
-    Object.assign(this._get_default_config(), config);
+    config = Object.assign(this._get_default_config(), config);
+    console.log(config);
     return new SlackBot(config.bot_name, config.icon_emoji, config.is_silent);
   }
 
@@ -20,32 +21,44 @@ module.exports = class SlackBot {
     return config.slackbot_default_config;
   }
 
-  post(channel_id, text) {
+  _bot_post(channel_id, text) {
     const path = process.env.INCOMING_WEBHOOK_PATH;
     const uri = 'https://hooks.slack.com/services' + path;
     const deferred = Promise.defer();
-
     const bot = {
       text: text,
       username: this._bot_name,
       channel: channel_id,
       icon_emoji: this._icon_emoji,
     }
+    console.log(bot);
 
+    // TODO: do not return promise
     request({
       uri: uri,
       method: 'POST',
       body: JSON.stringify(bot)
     }, function (err, response, body) {
       if(err) {
-        deferred.reject(err);
+        throw new Error(err);
       } else if(response.statusCode !== 200) {
-        deferred.reject(new Error('Incoming WebHook: ' + response.statusCode + ' ' + body));
+        throw new Error('Incoming WebHook: ' + response.statusCode + ' ' + body);
       }
-      deferred.resolve(body);
     });
+  }
 
-    return deferred.promise;
+  _incognito_post(text) {
+    console.log('silent!');
+    console.log(text);
+    // return res.status(200).send(text);
+  }
+
+  post(channel_id, text) {
+    if(this._is_silent) {
+      return this._incognito_post(text);
+    } else {
+      return this._bot_post(channel_id, text);
+    }
+
   }
 }
-  

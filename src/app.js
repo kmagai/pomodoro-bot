@@ -39,11 +39,12 @@ app.get('/', (req, res) => {
 app.post('/pomodoro', (req, res, next) => {
   if(!req.body.text) return res.status(200).send(help_message);
 
-  let user = User.getOrCreate({
+  let user = User.get_or_create({
     user_id: req.body.user_id,
     user_name: req.body.user_name,
     channel_id: req.body.channel_id
   });
+  console.log(user);
   
   const matches_config = req.body.text.match(/^(\S+)(\s+)(\S+)=(\S+)$/);
   if(matches_config) {
@@ -65,7 +66,7 @@ app.post('/pomodoro', (req, res, next) => {
     user.resetTimer();
     return res.status(200).end();
   } else if(matches[1] == 'config') {
-    return res.status(200).send(config_template(user.pomodoro));
+    return res.status(200).send(config_template(user.get_config()));
   } else {
     return res.status(200).send(help_message);
   }
