@@ -16,17 +16,17 @@ module.exports = class Pomodoro {
     return config.pomodoro_default_config;
   }
 
-  getPomodoro() {
-    client.get(user.get_redis_key('config'), function (err, data) {
-      if(err) return console.log(err);
-      if(data) {
-        this.user_config = JSON.parse(data);
-      }
-    });
-    return new Pomodoro(user_config.pomodoro_time, user_config.pomodoro);
-  }
+  // get_pomodoro() {
+  //   client.get(user.get_redis_key('config'), function (err, data) {
+  //     if(err) return console.log(err);
+  //     if(data) {
+  //       this.user_config = JSON.parse(data);
+  //     }
+  //   });
+  //   return new Pomodoro(user_config.pomodoro_time, user_config.pomodoro);
+  // }
 
-  startPomodoro() {
+  start_pomodoro() {
     let res, rej;
     var p = new Promise(function (resolve, reject) {
       res = resolve;
@@ -35,7 +35,7 @@ module.exports = class Pomodoro {
 
     p._timeout = setTimeout(res, this.pomodoro_time * 1000 * 60);
     // p._timeout = setTimeout(res, 2000);
-    p.resetTimer = (err) => {
+    p.reset_timer = (err) => {
       rej(err || new Error("reset pomodoro"));
       console.log("reset pomodoro!");
       clearTimeout(p._timeout);
@@ -44,7 +44,7 @@ module.exports = class Pomodoro {
     return p;
   }
 
-  startBreak() {
+  start_break() {
     let res, rej;
     var p = new Promise(function (resolve, reject) {
       res = resolve;
@@ -53,7 +53,7 @@ module.exports = class Pomodoro {
 
     p._timeout = setTimeout(res, this.break_time * 1000 * 60);
     // p._timeout = setTimeout(res, 2000);
-    p.resetTimer = (err) => {
+    p.reset_timer = (err) => {
       rej(err || new Error("reset pomodoro"));
       console.log("reset pomodoro!");
       clearTimeout(p._timeout);

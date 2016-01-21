@@ -160,7 +160,7 @@ module.exports = class User {
     return this.pomdoro.pomodoro_time;
   }
 
-  startTimer() {
+  start_timer() {
     if(user_pomodoros[this._user_id]) {
       console.log('ERROR: You already have a pomodoro session');
       this._slack_post(this._channel_id, 'you have a pomodoro session already')
@@ -208,7 +208,7 @@ module.exports = class User {
     return deferred.promise;
   }
 
-  resetTimer() {
+  reset_timer() {
     if(!user_pomodoros[this._user_id]) {
       console.log('ERROR: You have no pomodoro session');
       return;

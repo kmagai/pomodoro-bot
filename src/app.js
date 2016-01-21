@@ -60,10 +60,10 @@ app.post('/pomodoro', (req, res, next) => {
   const matches = req.body.text.match(/^(\S+)$/);
   if(!matches) return res.status(200).send(help_message);
   if(matches[1] == 'start') {
-    user.startTimer();
+    user.start_timer();
     return res.status(200).end();
   } else if(matches[1] == 'reset') {
-    user.resetTimer();
+    user.reset_timer();
     return res.status(200).end();
   } else if(matches[1] == 'config') {
     return res.status(200).send(config_template(user.get_config()));
