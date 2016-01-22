@@ -3,6 +3,11 @@ const validator = require('validator');
 
 let config = {};
 
+
+config.break_text = `start break for ${this._break_duration} min!`;
+config.finish_text = `your pomodoro session has finished!`;
+config.start_text = `start pomodoro for ${this._pomodoro_duration} min!`;
+
 config.slackbot_default_config = {
   bot_name: 'pomodoro',
   icon_emoji: ':tomato:',

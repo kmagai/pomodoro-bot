@@ -4,20 +4,11 @@ const redis = require('redis');
 
 const Pomodoro = require('./pomodoro');
 const SlackBot = require('./slack_bot');
-const config = require('./config.js')
-const client = getRedisClient();
+const config = require('./config');
 
-function getRedisClient() {
-  if(process.env.REDISTOGO_URL) {
-    var rtg = url.parse(process.env.REDISTOGO_URL);
-    var client = redis.createClient(rtg.port, rtg.hostname);
-    client.auth(rtg.auth.split(":")[1]);
-    return client;
-  } else {
-    return redis.createClient();
-  }
-}
-
+// TODO: save as module
+const util = require('./util');
+const redis_client = util.redis_client;
 
 let user_pomodoros = {};
 module.exports = class User {
@@ -48,7 +39,6 @@ module.exports = class User {
     return SlackBot.create(user_config)
   }
 
-  // static getOrCreate(user_id, user_name, channel_id) {
   static get_or_create(options) {
     let user = this._getExisting(options.user_id);
     if(!user) {
@@ -84,7 +74,7 @@ module.exports = class User {
       [key]: value
     });
     this.pomodoro[key] = value;
-    client.set(this._get_redis_key('config'), JSON.stringify(user_config));
+    redis_client.set(this._get_redis_key('config'), JSON.stringify(user_config));
   }
 
   // _add_completed_task() {
@@ -119,6 +109,7 @@ module.exports = class User {
 
   _convert_value_if_needed(key, value) {
     if(config.user_config_type.get(key) == Boolean) {
+      // TODO: separate validation with conversion
       if(config.bool_map.has(value)) {
         return config.bool_map.get(value);
       } else {
@@ -127,37 +118,58 @@ module.exports = class User {
     }
     return value;
   }
-  
+
   get_config() {
     return this._get_or_default_config();
   }
 
   _get_or_default_config() {
-    client.get(this._get_redis_key('config'), function (err, data) {
+    redis_client.get(this._get_redis_key('config'), function (err, data) {
       if(err) return console.log(err);
       if(data) return JSON.parse(data);
     });
     return config.user_config_default;
   }
-  
+
   _slack_post(channel_id, message) {
     return this.slack_bot.post(channel_id, message);
   }
 
   _start_pomodoro() {
-    return this.pomodoro.startPomodoro();
+    const start_pomodoro = this.pomodoro.start_pomodoro();
+    this._update_pomodoro_state(start_pomodoro);
+    return start_pomodoro;
   }
 
   _start_break() {
-    return this.pomodoro.startBreak();
+    const break_pomodoro = this.pomodoro.start_break();
+    this._update_pomodoro_state(break_pomodoro);
+    return break_pomodoro;
   }
 
   _break_duration() {
-    return this.pomdoro.break_time;
+    return this.pomodoro.break_time;
   }
 
   _pomodoro_duration() {
-    return this.pomdoro.pomodoro_time;
+    return this.pomodoro.pomodoro_time;
+  }
+
+  _update_pomodoro_state(pomodoro) {
+    Object.assign(user_pomodoros, {
+      [this._user_id]: pomodoro
+    });
+  }
+
+  _finish_pomodoro_time() {
+    this._slack_post(this._channel_id, config.break_text);
+  }
+
+  _finish_break_time() {
+    delete user_pomodoros[this._user_id];
+    this._slack_post(this._channel_id, config.finish_text);
+    this._add_completed_task();
+    deferred.resolve();
   }
 
   start_timer() {
@@ -166,44 +178,21 @@ module.exports = class User {
       this._slack_post(this._channel_id, 'you have a pomodoro session already')
     }
 
-    Object.assign(user_pomodoros, {
-      [this._user_id]: this.pomodoro
-    });
-
+    // TODO: そもそもpomodorosはインスタンスに割り当てるべき？それともSingletonにして振り回すべき？
+    this._update_pomodoro_state(this.pomodoro);
     const deferred = Promise.defer();
-    const break_text = `start break for ${this._break_duration} min!`;
-    const start_text = `start pomodoro for ${this._pomodoro_duration} min!`;
-    const finish_text = `your pomodoro session has finished!`;
+    this._slack_post(this._channel_id, config.start_text);
 
-    this._slack_post(this._channel_id, start_text);
-    console.log("pomodoro started");
-
-    const start_pomodoro = this._start_pomodoro();
-    Object.assign(user_pomodoros, {
-      [this._user_id]: start_pomodoro
-    });
-    start_pomodoro.then(() => {
-      console.log("pomodoro done");
-      this._slack_post(this._channel_id, break_text);
-      console.log("break started");
-      const start_break = this._start_break();
-      Object.assign(user_pomodoros, {
-        [this._user_id]: start_break
-      });
-      start_break.then(() => {
-        console.log("break done");
-        delete user_pomodoros[this._user_id];
-        this._slack_post(this._channel_id, finish_text);
-        console.log("done");
-        this._add_completed_task();
-        deferred.resolve();
+    this._start_pomodoro().then(() => {
+      this._finish_pomodoro_time();
+      this._start_break().then(() => {
+        this._finish_break_time();
       })
     }).catch(err => {
       deferred.reject(err);
-      // ??
+      // TODO: request
       return res.status(200).end();
     })
-
 
     return deferred.promise;
   }
@@ -214,7 +203,7 @@ module.exports = class User {
       return;
     }
     console.log("reset pomodoro");
-    user_pomodoros[this._user_id].resetTimer();
+    user_pomodoros[this._user_id].reset_timer();
     delete user_pomodoros[this._user_id];
     console.log("done");
   }
