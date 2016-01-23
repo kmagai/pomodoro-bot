@@ -5,8 +5,6 @@ const redis = require('redis');
 const Pomodoro = require('./pomodoro');
 const SlackBot = require('./slack_bot');
 const config = require('./config');
-
-// TODO: save as module
 const util = require('./util');
 const redis_client = util.redis_client;
 

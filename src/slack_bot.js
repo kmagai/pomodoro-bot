@@ -3,18 +3,19 @@
 const request = require('request');
 const config = require('./config.js')
 
+// TODO: use State Pattern or Strategy Pattern
+
 module.exports = class SlackBot {
   // module.exports = new SlackBot('pomodoro', ':tomato:');
-  constructor(bot_name, icon_emoji, is_silent) {
-    this._bot_name = bot_name;
-    this._icon_emoji = icon_emoji;
-    this._is_silent = is_silent;
+  constructor(options) {
+    this._bot_name = options.bot_name;
+    this._icon_emoji = options.icon_emoji;
+    this._is_silent = options.is_silent;
   }
 
   static create(config) {
     config = Object.assign(this._get_default_config(), config);
-    console.log(config);
-    return new SlackBot(config.bot_name, config.icon_emoji, config.is_silent);
+    return new SlackBot(config);
   }
 
   static _get_default_config() {
