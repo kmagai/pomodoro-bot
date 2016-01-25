@@ -6,11 +6,12 @@ const Pomodoro = require('./pomodoro');
 const SlackBot = require('./slack_bot');
 const config = require('./config');
 const util = require('./util');
+const constant = require('./constant');
+
 const redis_client = util.redis_client;
 
 let user_pomodoros = {};
 module.exports = class User {
-  // constructor(user_id, user_name, channel_id, pomodoro, slack_bot) {
   constructor(options) {
     options = Object.assign(this._defaults(), options);
     this._user_id = options.user_id;
@@ -160,12 +161,12 @@ module.exports = class User {
   }
 
   _finish_pomodoro_time() {
-    this._slack_post(this._channel_id, config.break_text);
+    this._slack_post(this._channel_id, constant.break_text);
   }
 
   _finish_break_time() {
     delete user_pomodoros[this._user_id];
-    this._slack_post(this._channel_id, config.finish_text);
+    this._slack_post(this._channel_id, constant.finish_text);
     this._add_completed_task();
     deferred.resolve();
   }
@@ -179,7 +180,7 @@ module.exports = class User {
     // TODO: そもそもpomodorosはインスタンスに割り当てるべき？それともSingletonにして振り回すべき？
     this._update_pomodoro_state(this.pomodoro);
     const deferred = Promise.defer();
-    this._slack_post(this._channel_id, config.start_text);
+    this._slack_post(this._channel_id, constant.start_text);
 
     this._start_pomodoro().then(() => {
       this._finish_pomodoro_time();
