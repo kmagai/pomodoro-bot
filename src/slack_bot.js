@@ -48,16 +48,16 @@ module.exports = class SlackBot {
     });
   }
 
-  _incognito_post(text) {
+  _incognito_post(res, text) {
     console.log('silent!');
     console.log(text);
-    // TODO: request
-    // return res.status(200).send(text);
+    // TODO: response
+    return res.status(200).send(text);
   }
 
-  post(channel_id, text) {
+  post(res, channel_id, text) {
     if(this._is_silent) {
-      return this._incognito_post(text);
+      return this._incognito_post(res, text);
     } else {
       return this._bot_post(channel_id, text);
     }

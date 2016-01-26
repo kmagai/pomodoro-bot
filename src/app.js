@@ -33,7 +33,8 @@ app.post('/pomodoro', (req, res, next) => {
   let user = User.get_or_create({
     user_id: req.body.user_id,
     user_name: req.body.user_name,
-    channel_id: req.body.channel_id
+    channel_id: req.body.channel_id,
+    res: res,
   });
   console.log(user);
 

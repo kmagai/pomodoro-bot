@@ -2,10 +2,6 @@
 
 let constant = {};
 
-constant.break_text = `start break for ${this._break_duration} min!`;
-constant.finish_text = `your pomodoro session has finished!`;
-constant.start_text = `start pomodoro for ${this._pomodoro_duration} min!`;
-
 constant.help_message = `
 [available commands]
 '/pomodoro start' start your pomdoro session

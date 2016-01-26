@@ -19,6 +19,7 @@ module.exports = class User {
     this._channel_id = options.channel_id;
     this.pomodoro = options.pomodoro;
     this.slack_bot = options.slack_bot;
+    this.res = options.res;
   }
 
   _defaults() {
@@ -41,17 +42,13 @@ module.exports = class User {
   static get_or_create(options) {
     let user = this._getExisting(options.user_id);
     if(!user) {
-      user = this._create(options.user_id, options.user_name, options.channel_id);
+      user = this._create(options);
     }
     return user;
   }
 
-  static _create(user_id, user_name, channel_id) {
-    return new User({
-      user_id: user_id,
-      user_name: user_name,
-      channel_id: channel_id
-    });
+  static _create(options) {
+    return new User(options);
   }
 
   static _getExisting(user_id) {
@@ -131,7 +128,7 @@ module.exports = class User {
   }
 
   _slack_post(channel_id, message) {
-    return this.slack_bot.post(channel_id, message);
+    return this.slack_bot.post(this.res, channel_id, message);
   }
 
   _start_pomodoro() {
@@ -161,12 +158,12 @@ module.exports = class User {
   }
 
   _finish_pomodoro_time() {
-    this._slack_post(this._channel_id, constant.break_text);
+    this._slack_post(this._channel_id, `start break for ${this._break_duration()} min!`);
   }
 
   _finish_break_time() {
     delete user_pomodoros[this._user_id];
-    this._slack_post(this._channel_id, constant.finish_text);
+    this._slack_post(this._channel_id, `your pomodoro session has finished!`);
     this._add_completed_task();
     deferred.resolve();
   }
@@ -180,7 +177,7 @@ module.exports = class User {
     // TODO: そもそもpomodorosはインスタンスに割り当てるべき？それともSingletonにして振り回すべき？
     this._update_pomodoro_state(this.pomodoro);
     const deferred = Promise.defer();
-    this._slack_post(this._channel_id, constant.start_text);
+    this._slack_post(this._channel_id, `start pomodoro for ${this._pomodoro_duration()} min!`);
 
     this._start_pomodoro().then(() => {
       this._finish_pomodoro_time();
@@ -190,7 +187,7 @@ module.exports = class User {
     }).catch(err => {
       deferred.reject(err);
       // TODO: request
-      return res.status(200).end();
+      return this.res.status(200).end();
     })
 
     return deferred.promise;
