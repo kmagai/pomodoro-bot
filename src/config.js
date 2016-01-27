@@ -4,31 +4,12 @@ const validator = require('validator');
 let config = {};
 
 
-config.break_text = `start break for ${this._break_duration} min!`;
-config.finish_text = `your pomodoro session has finished!`;
-config.start_text = `start pomodoro for ${this._pomodoro_duration} min!`;
-
-config.slackbot_default_config = {
+config.user_config_default = {
+  pomodoro_time: 25,
+  break_time: 25,
+  is_silent: true
   bot_name: 'pomodoro',
   icon_emoji: ':tomato:',
-  is_silent: true,
-}
-
-config.pomodoro_default_config = {
-  pomodoro_time: 25,
-  break_time: 25,
-};
-
-config.user_config_default = {
-  pomodoro_time: 25,
-  break_time: 25,
-  is_silent: true
-};
-
-config.user_config_default = {
-  pomodoro_time: 25,
-  break_time: 25,
-  is_silent: true
 };
 
 config.bool_map = new Map([

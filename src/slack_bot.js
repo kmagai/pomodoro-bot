@@ -19,7 +19,7 @@ module.exports = class SlackBot {
   }
 
   static _get_default_config() {
-    return config.slackbot_default_config;
+    return config.user_config_default;
   }
 
   _bot_post(channel_id, text) {

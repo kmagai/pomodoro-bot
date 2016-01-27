@@ -8,14 +8,9 @@ module.exports = class Pomodoro {
   }
   
   static create(config) {
-    Object.assign(this._get_default_config(), config);
     return new Pomodoro(config.pomodoro_time, config.break_time);
   }
   
-  static _get_default_config() {
-    return config.pomodoro_default_config;
-  }
-
   // get_pomodoro() {
   //   client.get(user.get_redis_key('config'), function (err, data) {
   //     if(err) return console.log(err);

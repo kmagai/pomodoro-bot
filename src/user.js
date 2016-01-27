@@ -1,7 +1,6 @@
 "use strict"
 
 const redis = require('redis');
-
 const Pomodoro = require('./pomodoro');
 const SlackBot = require('./slack_bot');
 const config = require('./config');
