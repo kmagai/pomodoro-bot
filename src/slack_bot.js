@@ -50,8 +50,6 @@ module.exports = class SlackBot {
 
   _incognito_post(res, text) {
     console.log('silent!');
-    console.log(text);
-    // TODO: response
     return res.status(200).send(text);
   }
 

@@ -7,7 +7,7 @@ let config = {};
 config.user_config_default = {
   pomodoro_time: 25,
   break_time: 25,
-  is_silent: true
+  is_silent: true,
   bot_name: 'pomodoro',
   icon_emoji: ':tomato:',
 };

@@ -36,7 +36,6 @@ app.post('/pomodoro', (req, res, next) => {
     channel_id: req.body.channel_id,
     res: res,
   });
-  console.log(user);
 
   const matches_config = req.body.text.match(/^(\S+)(\s+)(\S+)=(\S+)$/);
   if(matches_config) {

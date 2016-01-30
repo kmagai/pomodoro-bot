@@ -185,7 +185,6 @@ module.exports = class User {
       })
     }).catch(err => {
       deferred.reject(err);
-      // TODO: request
       return this.res.status(200).end();
     })
 
