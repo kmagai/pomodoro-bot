@@ -10,7 +10,6 @@ module.exports = class SlackBot {
   constructor(options) {
     this._bot_name = options.bot_name;
     this._icon_emoji = options.icon_emoji;
-    this._is_silent = options.is_silent;
   }
 
   static create(config) {
@@ -45,18 +44,7 @@ module.exports = class SlackBot {
     });
   }
 
-  _incognito_post(res, text) {
-    console.log('silent!');
-    console.log(text);
-    return res.status(200).send(text);
-  }
-
   post(res, channel_id, text) {
-    if(this._is_silent) {
-      return this._incognito_post(res, text);
-    } else {
-      return this._bot_post(channel_id, text);
-    }
-
+    return this._bot_post(channel_id, text);
   }
 }

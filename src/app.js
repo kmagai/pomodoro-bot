@@ -71,6 +71,5 @@ function setting_template(pomodoro) {
 [Your pomodoro setting]
 Pomodoro time: ${pomodoro.pomodoro_time} min ['/pomodoro config pomodoro_time=N']
 Break time   : ${pomodoro.break_time} min ['/pomodoro config break_time=N']
-Silent mode  : ${pomodoro.is_silent}   ['/pomodoro config is_silent=yes', '/pomodoro config is_silent=no']
 `;
 }
