@@ -5,6 +5,7 @@ const url = require('url');
 
 let util = {};
 
+// TODO: 永続化
 function getRedisClient() {
   if(process.env.REDISTOGO_URL) {
     var rtg = url.parse(process.env.REDISTOGO_URL);

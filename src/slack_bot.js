@@ -40,16 +40,14 @@ module.exports = class SlackBot {
       method: 'POST',
       body: JSON.stringify(bot)
     }, function (err, response, body) {
-      if(err) {
-        throw new Error(err);
-      } else if(response.statusCode !== 200) {
-        throw new Error('Incoming WebHook: ' + response.statusCode + ' ' + body);
-      }
+      if(err) return next(err);
+      if(response.statusCode !== 200) return next(new Error('Incoming WebHook: ' + response.statusCode + ' ' + body));
     });
   }
 
   _incognito_post(res, text) {
     console.log('silent!');
+    console.log(text);
     return res.status(200).send(text);
   }
 

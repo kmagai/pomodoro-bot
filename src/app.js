@@ -4,8 +4,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT || 3000;
-
-const url = require('url');
 const User = require('./user');
 const constant = require('./constant');
 
@@ -16,16 +14,8 @@ app.use(bodyParser.urlencoded({
 
 // test route
 app.get('/', (req, res) => {
-  res.status(200).send('Hello world!')
+  res.status(200).send('Hello pomodoro users!')
 });
-
-function setting_template(pomodoro) {
-  return trim `
-  [Your pomodoro setting]
-  Pomodoro time: ${pomodoro.pomodoro_time} min ['/pomodoro config pomodoro_time=N']
-  Break time   : ${pomodoro.break_time} min ['/pomodoro config break_time=N']
-  Silent mode  : ${pomodoro.is_silent}   ['/pomodoro config is_silent=yes', '/pomodoro config is_silent=no']`;
-}
 
 app.post('/pomodoro', (req, res, next) => {
   if(!req.body.text) return res.status(200).send(constant.help_message);
@@ -40,7 +30,9 @@ app.post('/pomodoro', (req, res, next) => {
   const matches_config = req.body.text.match(/^(\S+)(\s+)(\S+)=(\S+)$/);
   if(matches_config) {
     if(matches_config[1] == 'config') {
-      // TODO: introduce Promise and handle error
+      // TODO: configを設定した場合のみsilent modeが必ずundefinedになって表示される
+      // TODO: 一度タイマーを走らせるとリセットされる？開発環境のみ？
+      // TODO: 本番環境でもアプリケーションを再起動(デプロイ)すると設定が消える
       user.set_config_if_valid(matches_config[3], matches_config[4]);
       return res.status(200).send(setting_template(user.pomodoro));
     } else {
@@ -51,6 +43,7 @@ app.post('/pomodoro', (req, res, next) => {
   const matches = req.body.text.match(/^(\S+)$/);
   if(!matches) return res.status(200).send(constant.help_message);
   if(matches[1] == 'start') {
+    // TODO: 途中で接続切れたらどうすんの？
     user.start_timer();
     return res.status(200).end();
   } else if(matches[1] == 'reset') {
@@ -73,7 +66,11 @@ app.listen(port, () => {
   console.log('Slack bot listening on port ' + port);
 });
 
-function trim() {
-  var raw = String.raw.apply(null, arguments)
-  return raw.split('\n').map(s => s.trim()).join('\n').replace(/(^\n)|(\n$)/g, '')
+function setting_template(pomodoro) {
+  return `
+[Your pomodoro setting]
+Pomodoro time: ${pomodoro.pomodoro_time} min ['/pomodoro config pomodoro_time=N']
+Break time   : ${pomodoro.break_time} min ['/pomodoro config break_time=N']
+Silent mode  : ${pomodoro.is_silent}   ['/pomodoro config is_silent=yes', '/pomodoro config is_silent=no']
+`;
 }

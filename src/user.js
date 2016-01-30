@@ -121,7 +121,10 @@ module.exports = class User {
   _get_or_default_config() {
     redis_client.get(this._get_redis_key('config'), function (err, data) {
       if(err) return console.log(err);
-      if(data) return JSON.parse(data);
+      if(data) {
+        console.log(data);
+        return JSON.parse(data);
+      }
     });
     return config.user_config_default;
   }
@@ -133,6 +136,7 @@ module.exports = class User {
   _start_pomodoro() {
     const start_pomodoro = this.pomodoro.start_pomodoro();
     this._update_pomodoro_state(start_pomodoro);
+    console.log(start_pomodoro);
     return start_pomodoro;
   }
 
@@ -164,13 +168,12 @@ module.exports = class User {
     delete user_pomodoros[this._user_id];
     this._slack_post(this._channel_id, `your pomodoro session has finished!`);
     this._add_completed_task();
-    deferred.resolve();
   }
 
   start_timer() {
     if(user_pomodoros[this._user_id]) {
       console.log('ERROR: You already have a pomodoro session');
-      this._slack_post(this._channel_id, 'you have a pomodoro session already')
+      return this._slack_post(this._channel_id, 'you have a pomodoro session already');
     }
 
     // TODO: そもそもpomodorosはインスタンスに割り当てるべき？それともSingletonにして振り回すべき？
@@ -182,10 +185,10 @@ module.exports = class User {
       this._finish_pomodoro_time();
       this._start_break().then(() => {
         this._finish_break_time();
+        deferred.resolve();
       })
     }).catch(err => {
       deferred.reject(err);
-      return this.res.status(200).end();
     })
 
     return deferred.promise;
@@ -194,11 +197,14 @@ module.exports = class User {
   reset_timer() {
     if(!user_pomodoros[this._user_id]) {
       console.log('ERROR: You have no pomodoro session');
-      return;
+      return this._slack_post(this._channel_id, `ERROR: You have no pomodoro session`);
     }
     console.log("reset pomodoro");
-    user_pomodoros[this._user_id].reset_timer();
+    console.log(user_pomodoros);
+    console.log(user_pomodoros[this._user_id]);
+    this._slack_post(this._channel_id, `Your pomodoro session has cancelled`);
     delete user_pomodoros[this._user_id];
+    // user_pomodoros[this._user_id].reset_timer();
     console.log("done");
   }
 
