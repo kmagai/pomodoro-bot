@@ -20,13 +20,17 @@ config.bool_map = new Map([
   [0, false]
 ]);
 
-config.user_config_type = new Map([
+config.config_type_map = new Map([
+  // ['user_id', String],
+  // ['user_name', String],
+  // ['channel_id', String],
   ['pomodoro_time', Number],
   ['break_time', Number],
-  ['is_silent', Boolean]
+  ['is_silent', Boolean],
 ]);
 
-config.type_validator = new Map([
+config.type_validator_map = new Map([
+  [String, validator.isString],
   [Number, validator.isNumeric],
   [Boolean, validator.isBoolean]
 ]);

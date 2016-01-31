@@ -12,65 +12,93 @@ const redis_client = util.redis_client;
 let user_pomodoros = {};
 module.exports = class User {
   constructor(options) {
-    options = Object.assign(this._defaults(), options);
+    console.log('------options-------');
+    console.log(options);
+    console.log('------options-------');
     this._user_id = options.user_id;
     this._user_name = options.user_name;
     this._channel_id = options.channel_id;
+
     this.pomodoro = options.pomodoro;
     this.slack_bot = options.slack_bot;
     this.res = options.res;
+
+    // pomodoroの設定をpomodoroに渡してpomodoroをインスタンス化
+    this.pomodoro_time = options.pomodoro_time;
+    this.break_time = options.break_time;
   }
 
-  _defaults() {
-    const user_config = this._get_or_default_config();
-    return {
-      pomodoro: this._create_pomodoro(user_config),
-      slack_bot: this._create_slackbot(user_config)
-    };
+  static get_setting(options) {
+    const deferred = Promise.defer();
+    User._get_or_default_config().then((user_config) => {
+      const pomodoro = this._create_pomodoro(user_config);
+      const bot = this._create_slackbot(user_config);
+      const setting = Object.assign({
+        pomodoro_time: user_config.pomodoro_time,
+        break_time: user_config.break_time,
+        pomodoro: this._create_pomodoro(user_config),
+        slack_bot: this._create_slackbot(user_config),
+      }, options);
+      console.log('options ----------------');
+      console.log(options);
+      console.log('options ----------------');
+
+      console.log('setting ----------------');
+      console.log(setting);
+      console.log('setting ----------------');
+
+      return deferred.resolve(setting);
+    }).catch((err) => {
+      console.log(err);
+    });
+    return deferred.promise;
   }
 
-  _create_pomodoro(user_config) {
+  static _create_pomodoro(user_config) {
     console.log(user_config);
     return Pomodoro.create(user_config)
   }
 
-  _create_slackbot(user_config) {
+  static _create_slackbot(user_config) {
     return SlackBot.create(user_config)
   }
 
-  static get_or_create(options) {
-    let user = this._getExisting(options.user_id);
-    if(!user) {
-      user = this._create(options);
-    }
-    return user;
-  }
-
-  static _create(options) {
+  static create(options) {
     return new User(options);
   }
 
-  static _getExisting(user_id) {
-    this.pool = Object.assign({}, this.pool);
-    if(this.pool[user_id]) {
-      return this.pool[user_id];
-    }
-  }
-
-  set_config_if_valid(key, value) {
+  is_config_valid(key, value) {
     value = this._convert_value_if_needed(key, value);
-    if(this._validate_config(key, value)) {
-      this._set_config(key, value);
-    };
+    return this.validate_config(key, value);
   }
 
-  _set_config(key, value) {
-    const user_config = Object.assign(this._get_or_default_config(), {
-      [key]: value
-    });
-    this.pomodoro[key] = value;
-    redis_client.set(this._get_redis_key('config'), JSON.stringify(user_config));
+  set_config(key, value) {
+    User._get_or_default_config().then((current_config) => {
+      const user_config = Object.assign(current_config, {
+        [key]: value
+      });
+      return redis_client.set(User._get_redis_key('config'), JSON.stringify(user_config));
+    }).catch(err => {
+      console.log(err);
+    })
   }
+
+  // set_config_if_valid(key, value) {
+  //   const deferred = Promise.defer();
+  //   value = this._convert_value_if_needed(key, value);
+  //   if(this.validate_config(key, value)) {
+  //     this.set_config(key, value).then(() => {
+  //       console.log('resolved!!!!!!!!');
+  //       return deferred.resolve();
+  //     });
+  //   } else {
+  //     console.log('not resolved!!!!!!!!');
+  //     return deferred.resolve();
+  //   }
+  //   console.log('promised!!!!!');
+  //   return deferred.promise;
+  // }
+
 
   // _add_completed_task() {
   //   const completed_today = this._get_completed_task(this._today()) + 1;
@@ -92,18 +120,25 @@ module.exports = class User {
   //   return (new Date()).toISOString().slice(0,10).replace(/-/g,"")
   // }
 
-  _get_redis_key(target) {
+  static _get_redis_key(target) {
     return `${target}:${this.user_id}`;
   }
 
-  _validate_config(key, value) {
-    if(key == undefined || value == undefined) throw new Error("You don't have enough argument");
-    if(!config.user_config_type.has(key)) throw new Error('You specified non-existent config');
-    return config.type_validator.get(config.user_config_type.get(key))(value);
+  validate_config(key, value) {
+    console.log('hoge');
+    if(key == undefined || value == undefined) next(new Error("You don't have enough argument"));
+    if(!config.config_type_map.has(key)) next(new Error('You specified non-existent config'));
+    let validator = this._get_validator(config.config_type_map.get(key))
+    console.log(validator);
+    return validator(value);
+  }
+
+  _get_validator(type) {
+    return config.type_validator_map.get(type);
   }
 
   _convert_value_if_needed(key, value) {
-    if(config.user_config_type.get(key) == Boolean) {
+    if(config.config_type_map.get(key) == Boolean) {
       // TODO: separate validation with conversion
       if(config.bool_map.has(value)) {
         return config.bool_map.get(value);
@@ -114,19 +149,20 @@ module.exports = class User {
     return value;
   }
 
-  get_config() {
-    return this._get_or_default_config();
-  }
+  static _get_or_default_config() {
+    const deferred = Promise.defer();
 
-  _get_or_default_config() {
-    redis_client.get(this._get_redis_key('config'), function (err, data) {
-      if(err) return console.log(err);
+    redis_client.get(User._get_redis_key('config'), function (err, data) {
+      if(err) return deferred.reject(err);
       if(data) {
+        console.log("---configfound-----");
         console.log(data);
-        return JSON.parse(data);
+        console.log("---configfound-----");
+        return deferred.resolve(Object.assign(config.user_config_default, JSON.parse(data)));
       }
+      return deferred.resolve(config.user_config_default);
     });
-    return config.user_config_default;
+    return deferred.promise;
   }
 
   _slack_post(channel_id, message) {
@@ -204,7 +240,7 @@ module.exports = class User {
     console.log(user_pomodoros[this._user_id]);
     this._slack_post(this._channel_id, `Your pomodoro session has cancelled`);
     delete user_pomodoros[this._user_id];
-    // user_pomodoros[this._user_id].reset_timer();
+    user_pomodoros[this._user_id].reset_timer();
     console.log("done");
   }
 
